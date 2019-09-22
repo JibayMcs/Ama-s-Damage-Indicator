@@ -1,0 +1,27 @@
+modLoader="javafml"
+loaderVersion="[25,)"
+#issueTrackerURL="" 
+
+[[mods]] 
+modId="damage_indicator"
+version="${file.jarVersion}"
+displayName="Ama's Damage Indicator"
+#updateJSONURL=""
+displayURL="https://www.minecraftforgefrance.fr/"
+#logoFile="logo.png"
+credits=""
+authors="ZeAmateis"
+description='''A simple mod to show you damages taken or given by an entity and more !'''
+
+[[dependencies.damage_indicator]] #optional
+    modId="forge"
+    mandatory=true
+    versionRange="[25,)"
+    ordering="NONE"
+    side="BOTH"
+[[dependencies.damage_indicator]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.14.3,1.14.4]"
+    ordering="NONE"
+    side="BOTH"
