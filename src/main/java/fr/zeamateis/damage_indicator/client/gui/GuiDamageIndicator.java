@@ -65,7 +65,7 @@ public class GuiDamageIndicator extends IngameGui {
 
                 GlStateManager.pushMatrix();
 
-                if (entityRaytraced.isAlive()) {
+                if (entityRaytraced.isAlive() && !entityRaytraced.isInvisibleToPlayer(this.mc.player)) {
 
                     switch (DamageIndicatorMod.getConfig().getClient().overlayPosition.get()) {
                         case BOTTOM_LEFT:

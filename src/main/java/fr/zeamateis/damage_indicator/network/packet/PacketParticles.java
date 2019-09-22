@@ -5,6 +5,7 @@ import fr.zeamateis.damage_indicator.client.DamageIndicatorParticles;
 import fr.zeamateis.damage_indicator.client.particle.type.NumericParticleType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.world.ClientWorld;
+import net.minecraft.entity.Entity;
 import net.minecraft.network.PacketBuffer;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -14,15 +15,17 @@ import java.util.function.Supplier;
 
 public class PacketParticles implements IPacket<PacketParticles> {
 
-    public float damageAmount;
-    public double x, y, z;
-    public double xSpeed, ySpeed, zSpeed;
-    public int color;
+    private float damageAmount;
+    private double x, y, z;
+    private double xSpeed, ySpeed, zSpeed;
+    private int color;
+    private int entityID;
 
     public PacketParticles() {
     }
 
-    public PacketParticles(float damageAmount, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed, int colorIn) {
+    public PacketParticles(int entityID, float damageAmount, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed, int colorIn) {
+        this.entityID = entityID;
         this.damageAmount = damageAmount;
         this.x = x;
         this.y = y;
@@ -35,20 +38,23 @@ public class PacketParticles implements IPacket<PacketParticles> {
 
     @OnlyIn(Dist.CLIENT)
     private static void handleClient(PacketParticles packet) {
-
-        ClientWorld world = Minecraft.getInstance().world;
+        Minecraft minecraft = Minecraft.getInstance();
+        ClientWorld world = minecraft.world;
 
         NumericParticleType damageParticle = DamageIndicatorParticles.DAMAGE;
         damageParticle.setNumber(packet.damageAmount);
         damageParticle.setColor(packet.color);
 
-        world.addParticle(damageParticle, packet.x, packet.y, packet.z, packet.xSpeed, packet.ySpeed, packet.zSpeed);
+        Entity entity = world.getEntityByID(packet.entityID);
 
-
+        if (entity != null && entity.isInRangeToRenderDist(64)) {
+            world.addParticle(damageParticle, packet.x, packet.y, packet.z, packet.xSpeed, packet.ySpeed, packet.zSpeed);
+        }
     }
 
     @Override
     public void encode(PacketParticles packet, PacketBuffer buffer) {
+        buffer.writeInt(packet.entityID);
         buffer.writeFloat(packet.damageAmount);
         buffer.writeDouble(packet.x);
         buffer.writeDouble(packet.y);
@@ -61,14 +67,14 @@ public class PacketParticles implements IPacket<PacketParticles> {
 
     @Override
     public PacketParticles decode(PacketBuffer buffer) {
-        return new PacketParticles(buffer.readFloat(), buffer.readDouble(), buffer.readDouble(), buffer.readDouble(), buffer.readDouble(), buffer.readDouble(), buffer.readDouble(), buffer.readInt());
+        return new PacketParticles(buffer.readInt(), buffer.readFloat(), buffer.readDouble(), buffer.readDouble(), buffer.readDouble(), buffer.readDouble(), buffer.readDouble(), buffer.readDouble(), buffer.readInt());
     }
 
     @Override
     public void handle(PacketParticles packet, Supplier<NetworkEvent.Context> ctxProvider) {
         if (ctxProvider.get().getSender() == null) {
             ctxProvider.get().enqueueWork(() -> handleClient(packet));
-        } else {
+        }/* else {
 
             NumericParticleType damageParticle = DamageIndicatorParticles.DAMAGE;
             damageParticle.setNumber(packet.damageAmount);
@@ -76,7 +82,7 @@ public class PacketParticles implements IPacket<PacketParticles> {
 
             ctxProvider.get().getSender().world.addParticle(damageParticle, packet.x, packet.y, packet.z, packet.xSpeed, packet.ySpeed, packet.zSpeed);
 
-        }
+        }*/
 
         ctxProvider.get().setPacketHandled(true);
     }

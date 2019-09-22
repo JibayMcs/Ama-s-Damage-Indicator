@@ -7,6 +7,7 @@ import fr.zeamateis.damage_indicator.network.packet.PacketParticles;
 import fr.zeamateis.damage_indicator.network.packet.PacketPotionAddInfo;
 import fr.zeamateis.damage_indicator.network.packet.PacketPotionRemoveInfo;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.nbt.CompoundNBT;
@@ -20,13 +21,7 @@ import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 @EventBusSubscriber(modid = DamageIndicatorMod.MODID, bus = EventBusSubscriber.Bus.FORGE)
 public class CommonEventHandler {
 
-    //static final GuiDamageIndicator guiDamageIndicator;
 
-    static {
-        //guiDamageIndicator = new GuiDamageIndicator();
-    }
-
-    @SubscribeEvent
     public static void onLivingUpdate(LivingEvent.LivingUpdateEvent event) {
 
         /*if (!event.getEntityLiving().world.isRemote()) {
@@ -53,30 +48,33 @@ public class CommonEventHandler {
         event.getEntityLiving().getPersistentData().putInt("health", currentEntityHealth);*/
     }
 
-    //TODO implements for multiplayer
+    //TODO fix first person particles flood
     @SubscribeEvent
     public static void onLivingHeal(LivingHealEvent event) {
+        LivingEntity entityHealed = event.getEntityLiving();
+        if (entityHealed != null && !entityHealed.isInvisible()) {
+            double d0 = entityHealed.posX + 0.5D;
+            double d1 = entityHealed.posY + 2D;
+            double d2 = entityHealed.posZ + 0.5D;
 
-        double d0 = event.getEntityLiving().posX + 0.5D;
-        double d1 = event.getEntityLiving().posY + 2D;
-        double d2 = event.getEntityLiving().posZ + 0.5D;
-
-        /*if (event.getEntityLiving().getHealth() != event.getEntityLiving().getMaxHealth()) {
-            ParticleDamage particleDamage = new ParticleDamage(event.getAmount(), event.getEntityLiving().world, d0, d1, d2, 0.0, 0.0, 0.0, TextFormatting.DARK_GREEN.getColor());
-            Minecraft.getInstance().particles.addEffect(particleDamage);
-        }*/
-        AmyNetwork.sendPacketToEveryone(new PacketParticles(event.getAmount(), d0, d1, d2, 0.0D, 0.0D, 0.0D, Colors.DARK_GREEN.getColor()));
+            if (!(entityHealed instanceof PlayerEntity)) {
+                AmyNetwork.sendPacketToEveryone(new PacketParticles(entityHealed.getEntityId(), event.getAmount(), d0, d1, d2, 0.0D, 0.0D, 0.0D, Colors.DARK_GREEN.getColor()));
+            }
+        }
     }
 
     @SubscribeEvent
     public static void onLivingHurt(LivingHurtEvent event) {
         Entity entityAttacked = event.getEntityLiving();
-        double d0 = (double) entityAttacked.posX + 0.5D;
-        double d1 = (double) entityAttacked.posY + 2D;
-        double d2 = (double) entityAttacked.posZ + 0.5D;
+        if (entityAttacked != null && !entityAttacked.isInvisible()) {
 
-        if (event.getSource().getTrueSource() instanceof PlayerEntity) {
-            AmyNetwork.sendPacketTo((ServerPlayerEntity) event.getSource().getTrueSource(), new PacketParticles(event.getAmount(), d0, d1, d2, 0.0D, 0.0D, 0.0D, Colors.DARK_RED.getColor()));
+            double d0 = (double) entityAttacked.posX + 0.5D;
+            double d1 = (double) entityAttacked.posY + 2D;
+            double d2 = (double) entityAttacked.posZ + 0.5D;
+
+            if (event.getSource().getTrueSource() instanceof PlayerEntity) {
+                AmyNetwork.sendPacketTo((ServerPlayerEntity) event.getSource().getTrueSource(), new PacketParticles(entityAttacked.getEntityId(), event.getAmount(), d0, d1, d2, 0.0D, 0.0D, 0.0D, Colors.DARK_RED.getColor()));
+            }
         }
     }
 
@@ -85,8 +83,10 @@ public class CommonEventHandler {
         if (event.getEntityLiving().world.isRemote()) {
             return;
         }
-        if (event.getPotionEffect() != null) {
-            AmyNetwork.sendPacketToEveryone(new PacketPotionAddInfo(event.getPotionEffect().write(new CompoundNBT())));
+        if (event.getEntity() != null) {
+            if (event.getPotionEffect() != null) {
+                AmyNetwork.sendPacketToEveryone(new PacketPotionAddInfo(event.getPotionEffect().write(new CompoundNBT())));
+            }
         }
     }
 
@@ -95,8 +95,10 @@ public class CommonEventHandler {
         if (event.getEntityLiving().world.isRemote()) {
             return;
         }
-        if (event.getPotionEffect() != null) {
-            AmyNetwork.sendPacketToEveryone(new PacketPotionRemoveInfo(event.getPotionEffect().write(new CompoundNBT())));
+        if (event.getEntity() != null) {
+            if (event.getPotionEffect() != null) {
+                AmyNetwork.sendPacketToEveryone(new PacketPotionRemoveInfo(event.getPotionEffect().write(new CompoundNBT())));
+            }
         }
     }
 
@@ -105,8 +107,10 @@ public class CommonEventHandler {
         if (event.getEntityLiving().world.isRemote()) {
             return;
         }
-        if (event.getPotionEffect() != null) {
-            AmyNetwork.sendPacketToEveryone(new PacketPotionRemoveInfo(event.getPotionEffect().write(new CompoundNBT())));
+        if (event.getEntity() != null) {
+            if (event.getPotionEffect() != null) {
+                AmyNetwork.sendPacketToEveryone(new PacketPotionRemoveInfo(event.getPotionEffect().write(new CompoundNBT())));
+            }
         }
     }
 }
