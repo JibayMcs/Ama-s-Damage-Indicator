@@ -12,6 +12,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.lwjgl.opengl.GL11;
 
+//TODO Fix render bug in multiplayer, black particle
 @OnlyIn(Dist.CLIENT)
 public class ParticleNumeric extends Particle {
 
@@ -89,8 +90,8 @@ public class ParticleNumeric extends Particle {
         }
 
         this.move(this.motionX, this.motionY, this.motionZ);
-        this.motionY -= (double) 0.003F;
-        this.motionY = Math.max(this.motionY, (double) -0.14F);
+        this.motionY -= 0.003D;
+        this.motionY = Math.max(this.motionY, -0.14D);
     }
 
     @Override

@@ -1,7 +1,7 @@
 package fr.zeamateis.damage_indicator.network.packet;
 
+import fr.zeamateis.damage_indicator.DamageIndicatorMod;
 import fr.zeamateis.damage_indicator.amy.network.IPacket;
-import fr.zeamateis.damage_indicator.client.DamageIndicatorParticles;
 import fr.zeamateis.damage_indicator.client.particle.type.NumericParticleType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.world.ClientWorld;
@@ -38,10 +38,14 @@ public class PacketParticles implements IPacket<PacketParticles> {
 
     @OnlyIn(Dist.CLIENT)
     private static void handleClient(PacketParticles packet) {
+        if (!DamageIndicatorMod.getConfig().getClient().showParticles.get()) {
+            return;
+        }
+
         Minecraft minecraft = Minecraft.getInstance();
         ClientWorld world = minecraft.world;
 
-        NumericParticleType damageParticle = DamageIndicatorParticles.DAMAGE;
+        NumericParticleType damageParticle = DamageIndicatorMod.DAMAGE_PARTICLE;
         damageParticle.setNumber(packet.damageAmount);
         damageParticle.setColor(packet.color);
 

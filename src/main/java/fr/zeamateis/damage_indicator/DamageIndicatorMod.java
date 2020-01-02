@@ -1,17 +1,20 @@
 package fr.zeamateis.damage_indicator;
 
 import fr.zeamateis.damage_indicator.amy.network.AmyNetwork;
-import fr.zeamateis.damage_indicator.client.DamageIndicatorParticles;
 import fr.zeamateis.damage_indicator.client.config.DamageIndicatorConfig;
 import fr.zeamateis.damage_indicator.client.particle.ParticleDamage;
+import fr.zeamateis.damage_indicator.client.particle.type.NumericParticleType;
 import fr.zeamateis.damage_indicator.network.packet.PacketParticles;
 import fr.zeamateis.damage_indicator.network.packet.PacketPotionAddInfo;
 import fr.zeamateis.damage_indicator.network.packet.PacketPotionRemoveInfo;
 import net.minecraft.client.Minecraft;
-import net.minecraftforge.fml.DistExecutor;
+import net.minecraft.particles.ParticleType;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.ParticleFactoryRegisterEvent;
+import net.minecraftforge.event.RegistryEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.logging.log4j.LogManager;
@@ -24,12 +27,12 @@ public class DamageIndicatorMod {
     private static final Logger LOGGER = LogManager.getLogger();
     private static final DamageIndicatorConfig CONFIG = new DamageIndicatorConfig();
 
-    private final CommonProxy PROXY = DistExecutor.runForDist(() -> ClientProxy::new, () -> CommonProxy::new);
+    public static NumericParticleType DAMAGE_PARTICLE = new NumericParticleType(true);
+
 
     public DamageIndicatorMod() {
         CONFIG.register(ModLoadingContext.get());
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::commonSetup);
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::clientSetup);
     }
 
     public static Logger getLogger() {
@@ -49,22 +52,20 @@ public class DamageIndicatorMod {
 
         PacketPotionRemoveInfo packetPotionRemoveInfo = new PacketPotionRemoveInfo();
         AmyNetwork.getNetworkChannel().messageBuilder(PacketPotionRemoveInfo.class, 2).encoder(packetPotionRemoveInfo::encode).decoder(packetPotionRemoveInfo::decode).consumer(packetPotionRemoveInfo::handle).add();
-
     }
 
-    private void clientSetup(FMLClientSetupEvent event) {
-        this.PROXY.registerFactory();
-    }
-
-    static class ClientProxy extends CommonProxy {
-        @Override
-        void registerFactory() {
-            Minecraft.getInstance().particles.registerFactory(DamageIndicatorParticles.DAMAGE, new ParticleDamage.Factory());
+    @Mod.EventBusSubscriber(modid = MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
+    static class CommonRegistryHandler {
+        public static void onRegisterParticles(RegistryEvent.Register<ParticleType<?>> event) {
+            event.getRegistry().register(DAMAGE_PARTICLE.setRegistryName(MODID, "damage_particle"));
         }
     }
 
-    static class CommonProxy {
-        void registerFactory() {
+    @Mod.EventBusSubscriber(modid = MODID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
+    static class ClientRegistryHandler {
+        @SubscribeEvent
+        public static void onParticleFactoryRegistry(ParticleFactoryRegisterEvent event) {
+            Minecraft.getInstance().particles.registerFactory(DAMAGE_PARTICLE, factory -> new ParticleDamage.Factory());
         }
     }
 }

@@ -1,6 +1,6 @@
 package fr.zeamateis.damage_indicator.client.particle;
 
-import fr.zeamateis.damage_indicator.client.DamageIndicatorParticles;
+import fr.zeamateis.damage_indicator.DamageIndicatorMod;
 import fr.zeamateis.damage_indicator.client.particle.type.NumericParticleType;
 import net.minecraft.client.particle.IParticleFactory;
 import net.minecraft.client.particle.Particle;
@@ -15,17 +15,17 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 public class ParticleDamage extends ParticleNumeric implements IParticleData {
 
 
-    public ParticleDamage(double numberIn, World worldIn, double xCoordIn, double yCoordIn, double zCoordIn, double p_i46354_8_, double p_i46354_10_, double p_i46354_12_, int colorIn) {
+    private ParticleDamage(double numberIn, World worldIn, double xCoordIn, double yCoordIn, double zCoordIn, double p_i46354_8_, double p_i46354_10_, double p_i46354_12_, int colorIn) {
         super(numberIn, worldIn, xCoordIn, yCoordIn, zCoordIn, p_i46354_8_, p_i46354_10_, p_i46354_12_, colorIn);
     }
 
-    public ParticleDamage(World worldIn, double xCoordIn, double yCoordIn, double zCoordIn, double p_i1211_8_, double p_i1211_10_, double p_i1211_12_) {
+    private ParticleDamage(World worldIn, double xCoordIn, double yCoordIn, double zCoordIn, double p_i1211_8_, double p_i1211_10_, double p_i1211_12_) {
         super(worldIn, xCoordIn, yCoordIn, zCoordIn, p_i1211_8_, p_i1211_10_, p_i1211_12_);
     }
 
     @Override
     public ParticleType<NumericParticleType> getType() {
-        return DamageIndicatorParticles.DAMAGE.getType();
+        return DamageIndicatorMod.DAMAGE_PARTICLE.getType();
     }
 
     @Override
@@ -35,11 +35,15 @@ public class ParticleDamage extends ParticleNumeric implements IParticleData {
 
     @Override
     public String getParameters() {
-        return DamageIndicatorParticles.DAMAGE.getParameters();
+        return DamageIndicatorMod.DAMAGE_PARTICLE.getParameters();
     }
 
     @OnlyIn(Dist.CLIENT)
     public static class Factory implements IParticleFactory<NumericParticleType> {
+
+        public Factory() {
+        }
+
         @Override
         public Particle makeParticle(NumericParticleType typeIn, World worldIn, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
             return new ParticleDamage(typeIn.getNumber(), worldIn, x, y, z, xSpeed, ySpeed, zSpeed, typeIn.getColor());

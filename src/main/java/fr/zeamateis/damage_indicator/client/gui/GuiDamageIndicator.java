@@ -5,6 +5,7 @@ import com.google.common.collect.Ordering;
 import com.mojang.blaze3d.platform.GLX;
 import com.mojang.blaze3d.platform.GlStateManager;
 import fr.zeamateis.damage_indicator.DamageIndicatorMod;
+import fr.zeamateis.damage_indicator.amy.util.Colors;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.IngameGui;
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
@@ -26,6 +27,7 @@ import net.minecraft.potion.EffectInstance;
 import net.minecraft.potion.EffectUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
@@ -57,7 +59,6 @@ public class GuiDamageIndicator extends IngameGui {
         int zLevel = -90;
         this.mc.gameRenderer.getMouseOver(partialTicks);
 
-
         if (this.mc.pointedEntity != null) {
             if (this.mc.pointedEntity instanceof LivingEntity) {
 
@@ -79,6 +80,11 @@ public class GuiDamageIndicator extends IngameGui {
                             break;
                     }
 
+                    double hudScale = 0.5;//MathHelper.clamp(DamageIndicatorMod.getConfig().getClient().hudScale.get(), 0.0D, 1.0D);
+
+
+                    GlStateManager.scaled(hudScale, hudScale, hudScale);
+
                     GlStateManager.color4f(1.0F, 1.0F, 1.0F, 1.0F);
                     GlStateManager.enableBlend();
                     this.mc.getTextureManager().bindTexture(DAMAGE_INDICATOR_BG);
@@ -88,6 +94,7 @@ public class GuiDamageIndicator extends IngameGui {
                         String entityName = entityRaytraced.getName().getFormattedText();
                         this.drawString(this.mc.fontRenderer, entityName, 45, 5, 16777215);
                     }
+
 
                     this.drawEntityOnGui(20, 20, entityRaytraced);
 
@@ -103,7 +110,6 @@ public class GuiDamageIndicator extends IngameGui {
 
                 }
                 GlStateManager.popMatrix();
-
             }
         }
     }
@@ -297,82 +303,87 @@ public class GuiDamageIndicator extends IngameGui {
         if (DamageIndicatorMod.getConfig().getClient().showEntityStats.get()) {
             this.y = y;
 
-            // Draw hearts
-            this.mc.getTextureManager().bindTexture(GUI_ICONS_LOCATION);
-            int currentHealth = MathHelper.ceil(entityIn.getHealth());
+            if (DamageIndicatorMod.getConfig().getClient().showMinimalStats.get()) {
+                int currentHealth = MathHelper.ceil(entityIn.getHealth());
+                float maxHealth = entityIn.getMaxHealth();
 
-            int absorptionAmount = MathHelper.ceil(entityIn.getAbsorptionAmount());
-            int remainingAbsorption = absorptionAmount;
+                this.getFontRenderer().drawStringWithShadow(TextFormatting.BOLD + String.format("%s/%s", currentHealth, MathHelper.ceil(maxHealth)), x + 38, y - 5, Colors.DARK_RED.getColor());
+                this.getFontRenderer().drawStringWithShadow(TextFormatting.BOLD + String.format("%s", entityIn.getTotalArmorValue()), x + 38, y + 9, Colors.WHITE.getColor());
 
-            float maxHealth = entityIn.getMaxHealth();
+                this.mc.getTextureManager().bindTexture(GUI_ICONS_LOCATION);
 
-            int heartsRow = MathHelper.ceil((maxHealth + (float) absorptionAmount) / 2.0F / 10.0F);
-            int j2 = Math.max(10 - (heartsRow - 2), 3);
+                this.blit(x + 25, y - 5, 16, 0, 9, 9);
+                this.blit(x + 25, y - 5, 16 + 18 + 36 / 2, 0, 9, 9);
+                this.blit(x + 25, y + 8, 34, 9, 9, 9);
+            } else {
+                // Draw hearts
+                int currentHealth = MathHelper.ceil(entityIn.getHealth());
+                float maxHealth = entityIn.getMaxHealth();
 
-            for (int currentHeartBeingDrawn = MathHelper.ceil((maxHealth + (float) absorptionAmount) / 2.0F) - 1; currentHeartBeingDrawn >= 0; --currentHeartBeingDrawn) {
-                int texturePosX = 16;
-                int flashingHeartOffset = 0;
+                int absorptionAmount = MathHelper.ceil(entityIn.getAbsorptionAmount());
+                int remainingAbsorption = absorptionAmount;
 
-                int foeOffset = 0;
+                int heartsRow = MathHelper.ceil((maxHealth + (float) absorptionAmount) / 2.0F / 10.0F);
+                int j2 = Math.max(10 - (heartsRow - 2), 3);
 
-                foeOffset = 18;
+                for (int currentHeartBeingDrawn = MathHelper.ceil((maxHealth + (float) absorptionAmount) / 2.0F) - 1; currentHeartBeingDrawn >= 0; --currentHeartBeingDrawn) {
+                    int texturePosX = 16;
+                    int flashingHeartOffset = 0;
 
-                int rowsOfHearts = MathHelper.ceil((float) (currentHeartBeingDrawn + 1) / 10.0F) - 1;
-                int heartToDrawX = x + 25 + currentHeartBeingDrawn % 10 * 8;
-                int heartToDrawY = y - 5 + rowsOfHearts * j2;
+                    int foeOffset = 18;
 
-                int hardcoreModeOffset = 0;
+                    int rowsOfHearts = MathHelper.ceil((float) (currentHeartBeingDrawn + 1) / 10.0F) - 1;
+                    int heartToDrawX = x + 25 + currentHeartBeingDrawn % 10 * 8;
+                    int heartToDrawY = y - 5 + rowsOfHearts * j2;
 
-                this.blit(heartToDrawX, heartToDrawY, 16 + flashingHeartOffset * 9, 9 * hardcoreModeOffset, 9, 9);
+                    int hardcoreModeOffset = 0;
 
-                if (remainingAbsorption > 0) {
-                    if (remainingAbsorption == absorptionAmount && absorptionAmount % 2 == 1) {
-                        this.blit(heartToDrawX, heartToDrawY, texturePosX + 153, 9 * hardcoreModeOffset, 9, 9);
-                        --remainingAbsorption;
+                    this.blit(heartToDrawX, heartToDrawY, 16 + flashingHeartOffset * 9, 9 * hardcoreModeOffset, 9, 9);
+
+                    if (remainingAbsorption > 0) {
+                        if (remainingAbsorption == absorptionAmount && absorptionAmount % 2 == 1) {
+                            this.blit(heartToDrawX, heartToDrawY, texturePosX + 153, 9 * hardcoreModeOffset, 9, 9);
+                            --remainingAbsorption;
+                        } else {
+                            this.blit(heartToDrawX, heartToDrawY, texturePosX + 144, 9 * hardcoreModeOffset, 9, 9);
+                            remainingAbsorption -= 2;
+                        }
                     } else {
-                        this.blit(heartToDrawX, heartToDrawY, texturePosX + 144, 9 * hardcoreModeOffset, 9, 9);
-                        remainingAbsorption -= 2;
-                    }
-                } else {
-                    if (currentHeartBeingDrawn * 2 + 1 < currentHealth) {
-                        this.blit(heartToDrawX, heartToDrawY, texturePosX + foeOffset + 36 / 2, 9 * hardcoreModeOffset, 9, 9);
-                    }
+                        if (currentHeartBeingDrawn * 2 + 1 < currentHealth) {
+                            this.blit(heartToDrawX, heartToDrawY, texturePosX + foeOffset + 36 / 2, 9 * hardcoreModeOffset, 9, 9);
+                        }
 
-                    if (currentHeartBeingDrawn * 2 + 1 == currentHealth) {
-                        this.blit(heartToDrawX, heartToDrawY, texturePosX + foeOffset + 45, 9 * hardcoreModeOffset, 9, 9);
+                        if (currentHeartBeingDrawn * 2 + 1 == currentHealth) {
+                            this.blit(heartToDrawX, heartToDrawY, texturePosX + foeOffset + 45, 9 * hardcoreModeOffset, 9, 9);
+                        }
+                    }
+                }
+                y += (heartsRow - 1) * j2 + 10;
+
+                // Draw armor
+                int armor = entityIn.getTotalArmorValue();
+                for (int i = 0; i < 10; ++i) {
+                    if (armor > 0) {
+                        int armorIconX = x + 25 + i * 8;
+
+                        if (i * 2 + 1 < armor) {
+                            this.blit(armorIconX, y - 5, 34, 9, 9, 9);
+                        }
+
+                        if (i * 2 + 1 == armor) {
+                            this.blit(armorIconX, y - 5, 25, 9, 9, 9);
+                        }
+
+                        if (i * 2 + 1 > armor) {
+                            this.blit(armorIconX, y - 5, 16, 9, 9, 9);
+                        }
                     }
                 }
             }
-
-            y += (heartsRow - 1) * j2 + 10;
-
-            // Draw armor
-
-            int armor = entityIn.getTotalArmorValue();
-
-            for (int i = 0; i < 10; ++i) {
-                if (armor > 0) {
-                    int armorIconX = x + 25 + i * 8;
-
-                    if (i * 2 + 1 < armor) {
-                        this.blit(armorIconX, y - 5, 34, 9, 9, 9);
-                    }
-
-                    if (i * 2 + 1 == armor) {
-                        this.blit(armorIconX, y - 5, 25, 9, 9, 9);
-                    }
-
-                    if (i * 2 + 1 > armor) {
-                        this.blit(armorIconX, y - 5, 16, 9, 9, 9);
-                    }
-                }
-            }
-
-            y += 10;
         }
 
 
-        this.glX = (float) x + this.scaledWidth / 2;
+        this.glX = (float) (x + this.scaledWidth / 2);
         this.defineScale(entityIn);
 
         this.prevYawOffset = entityIn.renderYawOffset;
@@ -421,7 +432,7 @@ public class GuiDamageIndicator extends IngameGui {
         int scaleY = MathHelper.ceil(20 / entityIn.getSize(Pose.STANDING).height);
         int scaleX = MathHelper.ceil(18 / entityIn.getSize(Pose.STANDING).width);
         this.scale = Math.min(scaleX, scaleY);
-        this.glY = (float) this.y + (this.scaledHeight / 2 + 20 / 2) + 5;
+        this.glY = (float) (this.y + (this.scaledHeight / 2 + 20 / 2) + 5);
         if (entityIn instanceof GhastEntity) {
             this.glY -= 10;
         } else if (entityIn instanceof EndermanEntity) {

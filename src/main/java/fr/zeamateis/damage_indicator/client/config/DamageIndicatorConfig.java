@@ -28,9 +28,11 @@ public class DamageIndicatorConfig {
 
     public static class Client {
 
-        public final BooleanValue showInGameOverlay, showEntityName, showEntityStats, showEntityActivesPotions, showPotionInfo;
+        public final BooleanValue showInGameOverlay, showEntityName, showEntityStats, showMinimalStats, showEntityActivesPotions, showPotionInfo, showParticles;
 
         public final EnumValue<EnumGuiPos> overlayPosition;
+
+        public final ForgeConfigSpec.DoubleValue hudScale;
 
         Client(ForgeConfigSpec.Builder builder) {
             builder.comment("Client-only settings").push("client");
@@ -48,6 +50,11 @@ public class DamageIndicatorConfig {
             this.showPotionInfo = builder.comment("Display huge or little potion effect icons").translation("damage_indicator.config.client.showPotionInfo")
                     .define("showPotionInfo", true);
 
+            this.showParticles = builder.comment("Show Particles on Hit or Heal Entity ?").translation("damage_indicator.config.client.showParticles").define("showParticles", false);
+
+            this.showMinimalStats = builder.comment("Show stats like Hearts and Armor in Minimal View ?").translation("damage_indicator.config.client.showMinimalStats").define("showMinimalStats", true);
+
+            this.hudScale = builder.comment("Define the size of H.U.D when pointing entity").translation("damage_indicator.config.client.hudScale").defineInRange("hudScale", 1.0, 0.0, 1.0);
 
             builder.pop();
         }
