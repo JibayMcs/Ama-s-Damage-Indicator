@@ -6,7 +6,7 @@ import net.minecraftforge.common.ForgeConfigSpec.EnumValue;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.config.ModConfig;
 import org.apache.commons.lang3.tuple.Pair;
-
+ 
 public class DamageIndicatorConfig {
 
     private final ForgeConfigSpec clientSpec;
