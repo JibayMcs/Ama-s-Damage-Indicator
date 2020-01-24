@@ -1,5 +1,6 @@
 package fr.zeamateis.damage_indicator.client.event;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import fr.zeamateis.damage_indicator.DamageIndicatorMod;
 import fr.zeamateis.damage_indicator.client.gui.GuiDamageIndicator;
 import net.minecraftforge.api.distmarker.Dist;
@@ -20,10 +21,12 @@ public class ClientEventHandler {
     @SubscribeEvent
     public static void onRenderGui(RenderGameOverlayEvent.Post event) {
         if (DamageIndicatorMod.getConfig().getClient().showInGameOverlay.get()) {
-            if (event.getType() != ElementType.EXPERIENCE) {
+            if (event.getType() != ElementType.POTION_ICONS) {
                 return;
             }
+            RenderSystem.pushMatrix();
             guiDamageIndicator.renderGameOverlay(event.getPartialTicks());
+            RenderSystem.popMatrix();
         }
     }
 

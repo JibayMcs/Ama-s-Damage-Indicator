@@ -2,16 +2,18 @@ package fr.zeamateis.damage_indicator.client.gui;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
-import com.mojang.blaze3d.platform.GLX;
-import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.systems.RenderSystem;
 import fr.zeamateis.damage_indicator.DamageIndicatorMod;
 import fr.zeamateis.damage_indicator.amy.util.Colors;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.IngameGui;
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
+import net.minecraft.client.renderer.IRenderTypeBuffer;
+import net.minecraft.client.renderer.Quaternion;
 import net.minecraft.client.renderer.RenderHelper;
+import net.minecraft.client.renderer.Vector3f;
 import net.minecraft.client.renderer.entity.EntityRendererManager;
-import net.minecraft.client.renderer.texture.AtlasTexture;
 import net.minecraft.client.renderer.texture.PotionSpriteUploader;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.I18n;
@@ -56,7 +58,7 @@ public class GuiDamageIndicator extends IngameGui {
 
     @Override
     public void renderGameOverlay(float partialTicks) {
-        int zLevel = -90;
+        final int zLevel = -90;
         this.mc.gameRenderer.getMouseOver(partialTicks);
 
         if (this.mc.pointedEntity != null) {
@@ -64,40 +66,28 @@ public class GuiDamageIndicator extends IngameGui {
 
                 LivingEntity entityRaytraced = (LivingEntity) this.mc.pointedEntity;
 
-                GlStateManager.pushMatrix();
 
                 if (entityRaytraced.isAlive() && !entityRaytraced.isInvisibleToPlayer(this.mc.player)) {
 
                     switch (DamageIndicatorMod.getConfig().getClient().overlayPosition.get()) {
                         case BOTTOM_LEFT:
-                            GlStateManager.translated(0, this.mc.mainWindow.getScaledHeight() - 55, zLevel);
+                            RenderSystem.translated(0, this.mc.func_228018_at_().getScaledHeight() - 55, zLevel);
                             break;
                         case TOP_LEFT:
-                            GlStateManager.translated(0, 0, zLevel);
+                            RenderSystem.translated(0, 0, zLevel);
                             break;
                         default:
-                            GlStateManager.translated(0, 0, zLevel);
+                            RenderSystem.translated(0, 0, zLevel);
                             break;
                     }
 
-                    double hudScale = 0.5;//MathHelper.clamp(DamageIndicatorMod.getConfig().getClient().hudScale.get(), 0.0D, 1.0D);
+                    final double hudScale = 0.5;//MathHelper.clamp(DamageIndicatorMod.getConfig().getClient().hudScale.get(), 0.0D, 1.0D);
 
 
-                    GlStateManager.scaled(hudScale, hudScale, hudScale);
+                    RenderSystem.scaled(hudScale, hudScale, hudScale);
 
-                    GlStateManager.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-                    GlStateManager.enableBlend();
-                    this.mc.getTextureManager().bindTexture(DAMAGE_INDICATOR_BG);
-                    blit(0, 0, 42, 42, 42, 42, 42, 42);
-
-                    if (DamageIndicatorMod.getConfig().getClient().showEntityName.get()) {
-                        String entityName = entityRaytraced.getName().getFormattedText();
-                        this.drawString(this.mc.fontRenderer, entityName, 45, 5, 16777215);
-                    }
-
-
-                    this.drawEntityOnGui(20, 20, entityRaytraced);
-
+                    //Draw potions informations
+                    this.mc.getTextureManager().bindTexture(ContainerScreen.INVENTORY_BACKGROUND);
                     if (DamageIndicatorMod.getConfig().getClient().showEntityActivesPotions.get()) {
                         Collection<EffectInstance> collection = entityRaytraced.getActivePotionEffects();
 
@@ -108,34 +98,46 @@ public class GuiDamageIndicator extends IngameGui {
                         }
                     }
 
+
+                    RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+                    RenderSystem.enableBlend();
+                    this.mc.getTextureManager().bindTexture(DAMAGE_INDICATOR_BG);
+                    blit(0, 0, 42, 42, 42, 42, 42, 42);
+
+                    if (DamageIndicatorMod.getConfig().getClient().showEntityName.get()) {
+                        String entityName = entityRaytraced.getName().getFormattedText();
+                        this.drawString(this.mc.fontRenderer, entityName, 45, 5, 16777215);
+                    }
+
+                    this.drawEntityOnGui(20, 20, entityRaytraced);
                 }
-                GlStateManager.popMatrix();
             }
         }
     }
 
     private void drawLittlePotionIcon(Collection<EffectInstance> collection, double zLevel) {
-        GlStateManager.pushMatrix();
-        GlStateManager.scaled(0.5, 0.5, 0.5);
+        RenderSystem.pushMatrix();
+        RenderSystem.scaled(0.5, 0.5, 0.5);
 
         switch (DamageIndicatorMod.getConfig().getClient().overlayPosition.get()) {
             case BOTTOM_LEFT:
-                GlStateManager.translated(17.5, -82, zLevel);
+                RenderSystem.translated(17.5, -82, zLevel);
                 break;
             case TOP_LEFT:
-                GlStateManager.translated(17.5, 82, zLevel);
+                RenderSystem.translated(17.5, 82, zLevel);
                 break;
             default:
-                GlStateManager.translated(1, 42, zLevel);
+                RenderSystem.translated(1, 42, zLevel);
                 break;
         }
 
         if (!collection.isEmpty()) {
-            GlStateManager.enableBlend();
+            RenderSystem.enableBlend();
             int i = 0;
             int j = 0;
             PotionSpriteUploader potionspriteuploader = this.mc.getPotionSpriteUploader();
             List<Runnable> list = Lists.newArrayListWithExpectedSize(collection.size());
+
             for (EffectInstance effectinstance : Ordering.natural().reverse().sortedCopy(collection)) {
                 Effect effect = effectinstance.getPotion();
                 if (!effect.shouldRenderHUD(effectinstance)) {
@@ -172,7 +174,7 @@ public class GuiDamageIndicator extends IngameGui {
                             break;
                     }
 
-                    GlStateManager.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+                    RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
                     float f = 1.0F;
                     if (effectinstance.isAmbient()) {
                         this.blit(k, l, 165, 166, 24, 24);
@@ -184,43 +186,41 @@ public class GuiDamageIndicator extends IngameGui {
                         }
                     }
 
-                    float f_f = f;
-                    int k_f = k;
-                    int l_f = l;
+                    float f1 = f;
+                    int i1 = k;
+                    int j1 = l;
 
                     TextureAtlasSprite textureatlassprite = potionspriteuploader.getSprite(effect);
                     list.add(() -> {
-                        GlStateManager.color4f(1.0F, 1.0F, 1.0F, f_f);
-                        blit(k_f + 3, l_f + 3, this.blitOffset, 18, 18, textureatlassprite);
+                        this.mc.getTextureManager().bindTexture(textureatlassprite.func_229241_m_().func_229223_g_());
+                        RenderSystem.color4f(1.0F, 1.0F, 1.0F, f1);
+                        blit(i1 + 3, j1 + 3, this.getBlitOffset(), 18, 18, textureatlassprite);
                     });
-                    effect.renderHUDEffect(effectinstance, this, k, l, this.blitOffset, f);
-
+                    effectinstance.renderHUDEffect(this, k, l, this.getBlitOffset(), f);
                 }
             }
-
-            this.mc.getTextureManager().bindTexture(AtlasTexture.LOCATION_EFFECTS_TEXTURE);
             list.forEach(Runnable::run);
         }
 
-        GlStateManager.popMatrix();
+        RenderSystem.popMatrix();
     }
 
     private void drawPotionIconWithInfo(Collection<EffectInstance> collection, double zLevel) {
-        GlStateManager.pushMatrix();
-        int i = 1;
+        RenderSystem.pushMatrix();
+        final int i = 1;
         if (!collection.isEmpty()) {
-            GlStateManager.scaled(0.5, 0.5, 0.5);
+            RenderSystem.scaled(0.5, 0.5, 0.5);
 
             switch (DamageIndicatorMod.getConfig().getClient().overlayPosition.get()) {
                 case BOTTOM_LEFT:
-                    GlStateManager.translated(1, -72, zLevel);
+                    RenderSystem.translated(1, -72, zLevel);
                     this.j = -this.j;
                     break;
                 case TOP_LEFT:
-                    GlStateManager.translated(1, 42, zLevel);
+                    RenderSystem.translated(1, 42, zLevel);
                     break;
                 default:
-                    GlStateManager.translated(1, 42, zLevel);
+                    RenderSystem.translated(1, 42, zLevel);
                     break;
             }
 
@@ -230,8 +230,8 @@ public class GuiDamageIndicator extends IngameGui {
             }
 
 
-            GlStateManager.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-            GlStateManager.disableLighting();
+            RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+            RenderSystem.disableLighting();
 
             Iterable<EffectInstance> iterable = Ordering.<EffectInstance>natural().sortedCopy(collection);
             this.drawPotionBackground(i, this.j, iterable);
@@ -239,7 +239,7 @@ public class GuiDamageIndicator extends IngameGui {
             this.drawPotionInformations(i, this.j, iterable);
 
         }
-        GlStateManager.popMatrix();
+        RenderSystem.popMatrix();
     }
 
     private void drawPotionBackground(int p_214079_1_, int p_214079_2_, Iterable<EffectInstance> p_214079_3_) {
@@ -247,24 +247,25 @@ public class GuiDamageIndicator extends IngameGui {
         int i = 42;
 
         for (EffectInstance effectinstance : p_214079_3_) {
-            GlStateManager.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+            RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
             this.blit(p_214079_1_, i, 0, 166, 140, 32);
             i += p_214079_2_;
         }
 
     }
 
-    private void drawPotionEffectIcon(int p_214077_1_, int p_214077_2_, Iterable<EffectInstance> p_214077_3_) {
-        this.mc.getTextureManager().bindTexture(AtlasTexture.LOCATION_EFFECTS_TEXTURE);
+    private void drawPotionEffectIcon(int p_214077_1_, int p_214077_2_, Iterable<EffectInstance> effectInstances) {
         PotionSpriteUploader potionspriteuploader = this.mc.getPotionSpriteUploader();
         int i = 42;
 
-        for (EffectInstance effectinstance : p_214077_3_) {
+        for (EffectInstance effectinstance : effectInstances) {
             if (!effectinstance.getPotion().shouldRender(effectinstance)) {
                 continue;
             }
             Effect effect = effectinstance.getPotion();
-            blit(p_214077_1_ + 6, i + 7, this.blitOffset, 18, 18, potionspriteuploader.getSprite(effect));
+            TextureAtlasSprite textureatlassprite = potionspriteuploader.getSprite(effect);
+            this.mc.getTextureManager().bindTexture(textureatlassprite.func_229241_m_().func_229223_g_());
+            blit(p_214077_1_ + 6, i + 7, this.getBlitOffset(), 18, 18, potionspriteuploader.getSprite(effect));
             i += p_214077_2_;
         }
 
@@ -277,7 +278,7 @@ public class GuiDamageIndicator extends IngameGui {
             if (!effectinstance.getPotion().shouldRender(effectinstance)) {
                 continue;
             }
-            effectinstance.getPotion().renderHUDEffect(effectinstance, this, 0, 0, this.blitOffset, 0);
+            effectinstance.getPotion().renderHUDEffect(effectinstance, this, 0, 0, this.getBlitOffset(), 0);
             if (!effectinstance.getPotion().shouldRenderInvText(effectinstance)) {
                 i += p_214078_2_;
                 continue;
@@ -327,16 +328,16 @@ public class GuiDamageIndicator extends IngameGui {
                 int j2 = Math.max(10 - (heartsRow - 2), 3);
 
                 for (int currentHeartBeingDrawn = MathHelper.ceil((maxHealth + (float) absorptionAmount) / 2.0F) - 1; currentHeartBeingDrawn >= 0; --currentHeartBeingDrawn) {
-                    int texturePosX = 16;
-                    int flashingHeartOffset = 0;
+                    final int texturePosX = 16;
+                    final int flashingHeartOffset = 0;
 
-                    int foeOffset = 18;
+                    final int foeOffset = 18;
 
                     int rowsOfHearts = MathHelper.ceil((float) (currentHeartBeingDrawn + 1) / 10.0F) - 1;
                     int heartToDrawX = x + 25 + currentHeartBeingDrawn % 10 * 8;
                     int heartToDrawY = y - 5 + rowsOfHearts * j2;
 
-                    int hardcoreModeOffset = 0;
+                    final int hardcoreModeOffset = 0;
 
                     this.blit(heartToDrawX, heartToDrawY, 16 + flashingHeartOffset * 9, 9 * hardcoreModeOffset, 9, 9);
 
@@ -397,35 +398,39 @@ public class GuiDamageIndicator extends IngameGui {
         entityIn.rotationYawHead = 0.0f;
         entityIn.prevRotationYawHead = 0.0f;
 
-        GlStateManager.enableColorMaterial();
-        GlStateManager.pushMatrix();
+        RenderSystem.enableColorMaterial();
+        RenderSystem.pushMatrix();
 
-        GlStateManager.translatef(this.glX, this.glY, 50.0F);
-        GlStateManager.scalef((float) (-this.scale), (float) this.scale, (float) this.scale);
-        GlStateManager.rotatef(180.0F, 0.0F, 0.0F, 1.0F);
-        GlStateManager.rotatef(135.0F, 0.0F, 1.0F, 0.0F);
-        GlStateManager.rotatef(-100.0F, 0.0F, 1.0F, 0.0F);
-        GlStateManager.rotatef(0.0f, 1.0F, 0.0F, 0.0F);
+        RenderSystem.pushMatrix();
+        RenderSystem.translatef((float) this.glX, (float) this.glY, 1050.0F);
+        RenderSystem.scalef(1.0F, 1.0F, -1.0F);
+        MatrixStack lvt_8_1_ = new MatrixStack();
+        lvt_8_1_.func_227861_a_(0.0D, -3.0D, 1000.0D);
+        lvt_8_1_.func_227862_a_((float) this.scale, (float) this.scale, (float) this.scale);
+        lvt_8_1_.func_227863_a_(Vector3f.field_229180_c_.func_229187_a_(-175.0F));
+        Quaternion lvt_9_1_ = Vector3f.field_229183_f_.func_229187_a_(180.0F);
+        Quaternion lvt_10_1_ = Vector3f.field_229179_b_.func_229187_a_(1 * 20.0F);
+        lvt_9_1_.multiply(lvt_10_1_);
+        lvt_8_1_.func_227863_a_(lvt_9_1_);
 
-        RenderHelper.enableStandardItemLighting();
-
-        GlStateManager.translatef(0.0F, 0.0F, 0.0F);
-        EntityRendererManager rendermanager = Minecraft.getInstance().getRenderManager();
-        rendermanager.setPlayerViewY(180.0F);
-        rendermanager.setRenderShadow(false);
-        rendermanager.renderEntity(entityIn, 0.0D, 0.0D, 0.0D, 0.0F, 1.0F, false);
-        rendermanager.setRenderShadow(true);
+        EntityRendererManager lvt_16_1_ = Minecraft.getInstance().getRenderManager();
+        lvt_10_1_.conjugate();
+        lvt_16_1_.func_229089_a_(lvt_10_1_);
+        lvt_16_1_.setRenderShadow(false);
+        IRenderTypeBuffer.Impl lvt_17_1_ = Minecraft.getInstance().func_228019_au_().func_228487_b_();
+        lvt_16_1_.func_229084_a_(entityIn, 0.0D, 0.0D, 0.0D, 0.0F, 1.0F, lvt_8_1_, lvt_17_1_, 15728880);
+        lvt_17_1_.func_228461_a_();
+        lvt_16_1_.setRenderShadow(true);
         entityIn.renderYawOffset = this.prevYawOffset;
         entityIn.rotationYaw = this.prevYaw;
         entityIn.rotationPitch = this.prevPitch;
-        entityIn.rotationYawHead = this.prevYawHead;
-        entityIn.prevRotationYawHead = this.prevPrevYahHead;
-        GlStateManager.popMatrix();
+        entityIn.prevRotationYawHead = this.prevYawHead;
+        entityIn.rotationYawHead = this.prevPrevYahHead;
+        RenderSystem.popMatrix();
+        RenderSystem.popMatrix();
         RenderHelper.disableStandardItemLighting();
-        GlStateManager.disableRescaleNormal();
-        GlStateManager.activeTexture(GLX.GL_TEXTURE1);
-        GlStateManager.disableTexture();
-        GlStateManager.activeTexture(GLX.GL_TEXTURE0);
+        RenderSystem.disableRescaleNormal();
+        RenderSystem.disableTexture();
     }
 
     private void defineScale(LivingEntity entityIn) {
@@ -435,9 +440,12 @@ public class GuiDamageIndicator extends IngameGui {
         this.glY = (float) (this.y + (this.scaledHeight / 2 + 20 / 2) + 5);
         if (entityIn instanceof GhastEntity) {
             this.glY -= 10;
+            this.scale = 3;
         } else if (entityIn instanceof EndermanEntity) {
+            this.glY += 2;
             this.scale = 10;
         } else if (entityIn instanceof CaveSpiderEntity) {
+            this.glY -= 5;
             this.scale = 18;
         } else if (entityIn instanceof WolfEntity) {
             WolfEntity wolfEntity = (WolfEntity) entityIn;

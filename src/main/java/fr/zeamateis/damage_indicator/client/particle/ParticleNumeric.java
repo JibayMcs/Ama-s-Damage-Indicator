@@ -1,12 +1,14 @@
 package fr.zeamateis.damage_indicator.client.particle;
 
-import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.IVertexBuilder;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.particle.IParticleRenderType;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.renderer.ActiveRenderInfo;
-import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -32,19 +34,16 @@ public class ParticleNumeric extends Particle {
         this.customColor = colorIn;
     }
 
-    /**
-     * Renders the particle
-     */
     @Override
-    public void renderParticle(BufferBuilder buffer, ActiveRenderInfo activeRenderInfo, float partialTicks, float rotationX, float rotationZ, float rotationYZ, float rotationXY, float rotationXZ) {
+    public void func_225606_a_(IVertexBuilder iVertexBuilder, ActiveRenderInfo activeRenderInfo, float partialTicks) {
         float rotationYaw = (-Minecraft.getInstance().player.rotationYaw);
         float rotationPitch = Minecraft.getInstance().player.rotationPitch;
+        Vec3d lvt_4_1_ = activeRenderInfo.getProjectedView();
+        float posX = (float) (MathHelper.lerp((double) partialTicks, this.prevPosX, this.posX) - lvt_4_1_.getX());
+        float posY = (float) (MathHelper.lerp((double) partialTicks, this.prevPosY, this.posY) - lvt_4_1_.getY());
+        float posZ = (float) (MathHelper.lerp((double) partialTicks, this.prevPosZ, this.posZ) - lvt_4_1_.getZ());
 
-        double posX = (this.prevPosX + (this.posX - this.prevPosX) * partialTicks - Particle.interpPosX);
-        double posY = (this.prevPosY + (this.posY - this.prevPosY) * partialTicks - Particle.interpPosY);
-        double posZ = (this.prevPosZ + (this.posZ - this.prevPosZ) * partialTicks - Particle.interpPosZ);
-
-        GlStateManager.pushMatrix();
+        RenderSystem.pushMatrix();
 
         GL11.glTranslated(posX, posY - 0.5F, posZ);
         GL11.glRotatef(rotationYaw, 0.0F, 1.0F, 0.0F);
@@ -57,22 +56,23 @@ public class ParticleNumeric extends Particle {
 
         FontRenderer fontRenderer = Minecraft.getInstance().fontRenderer;
 
-        GlStateManager.disableLighting();
-        GlStateManager.depthMask(false);
-        GlStateManager.disableDepthTest();
+        RenderSystem.disableColorMaterial();
+        RenderSystem.disableLighting();
+        RenderSystem.depthMask(false);
+        RenderSystem.disableDepthTest();
 
         fontRenderer.drawStringWithShadow(String.valueOf((int) this.number), 0, 0, this.customColor);
 
-        GlStateManager.enableDepthTest();
-        GlStateManager.depthMask(true);
-        GlStateManager.enableLighting();
+        RenderSystem.enableDepthTest();
+        RenderSystem.depthMask(false);
+        RenderSystem.enableLighting();
+        RenderSystem.enableColorMaterial();
 
-        GlStateManager.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-
-        GlStateManager.popMatrix();
+        RenderSystem.popMatrix();
 
         this.setSize(1.0F, 1.0F);
     }
+
 
     @Override
     public void tick() {

@@ -13,7 +13,7 @@ apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
 
-version = '0.0.8'
+version = '0.0.9'
 group = 'fr.zeamateis.damage_indicator' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = 'damage_indicator'
 
@@ -61,7 +61,7 @@ minecraft {
 }
 
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.15.1-30.0.21'
+    minecraft 'net.minecraftforge:forge:1.15.1-30.0.51'
 }
 
 // Example for how to get properties into the manifest for reading by the runtime..
